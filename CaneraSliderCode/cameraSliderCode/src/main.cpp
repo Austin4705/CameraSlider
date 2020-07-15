@@ -26,7 +26,7 @@ class bluetoothFunctions{
     if(bluetooth.available()){
       return(bluetooth.read());
     }
-    else{}
+    else{return("")}
   }
     void writeData(String inputString){
       for(int counter = 0; counter < inputString.length(); counter++){
@@ -77,21 +77,22 @@ class bluetoothFunctions{
   int findNum(String input){ //finds nth number in the string
     return(1);
   }
-  // void parseData(String input, int& distance, float& speed, bool& dir){
-  //   char firstChar = input.charAt(0);
-  //   switch(firstChar){
-  //     case "D":
+  //ill write this tom
+  void parseData(String input, int& distance, float& speed, bool& dir){
+    char firstChar = input.charAt(0);
+    switch(firstChar){
+      case "D":
 
-  //     break;
+      break;
 
-  //     //case "T":
+      //case "T":
 
-  //     default:
-  //     bluetooth.write("ErrorInvalidCommand");
-  //     return("");
-  //     break;
-  //   }
-  // }
+      default:
+      bluetooth.write("ErrorInvalidCommand");
+      return("");
+      break;
+    }
+  }
 
 };
 bluetoothFunctions bte;
@@ -238,21 +239,13 @@ void setup() {
 
 //simple ik, the var there are refrence btw
 void loop() {
-  // int distance;
-  // float speed;
-  // bool dir;
-  // String inputStr = bte.readData();
-  // bte.parseData(inputStr, distance, speed, dir);
-  // stepper.driveDistance(distance, speed, dir);
+  int distance;
+  float speed;
+  bool dir;
+  String inputStr = bte.readData();
+  bte.parseData(inputStr, distance, speed, dir);
+  stepper.driveDistance(distance, speed, dir);
 
-  stepper.driveDistance(300, 30, 1);
-  digitalWrite(ledPin, HIGH);
-  Serial.println("High");
-  delay(1000);
-  Serial.println("LOW");
-  stepper.driveDistance(300, 30, 0);
-  digitalWrite(ledPin, LOW);
-  delay(1000);
 }
 
 
