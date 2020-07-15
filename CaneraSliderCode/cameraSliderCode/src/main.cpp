@@ -22,20 +22,23 @@ volatile bool buttonPressed = 0;
 //classes
 class bluetoothFunctions{
   public:
-    int readData(){
-    if(bluetooth.available()){
-      return(bluetooth.read());
+    String readData(){
+      String data = "";
+    while(bluetooth.available()){
+      char charData = bluetooth.read();
+      data += charData;
+      //Serial.write(bluetooth.read());
     }
-    else{return("")}
+    return(data);
   }
     void writeData(String inputString){
       for(int counter = 0; counter < inputString.length(); counter++){
-        if(bluetooth.available()){
-          bluetooth.write(inputString.charAt(counter));
-          break;
-        }
-        else{}
+          char letter = inputString.charAt(counter); 
+          bluetooth.write(letter);
       }
+      bluetooth.println("");
+     //bluetooth.write(inputString[inputString.length()]);
+      //bluetooth.write();
     }
   bool findNumber(char inputChar){
     switch (inputChar)
@@ -74,23 +77,51 @@ class bluetoothFunctions{
       break;
     }
   }
-  int findNum(String input){ //finds nth number in the string
-    return(1);
-  }
   //ill write this tom
   void parseData(String input, int& distance, float& speed, bool& dir){
     char firstChar = input.charAt(0);
-    switch(firstChar){
-      case "D":
+    if(firstChar == 'D'){
+      int intValues[3] = {0};
+      char startChar = 1;
+      String valString = "";
+      //put the number into the string
+      for (int counter = 0; counter < 3; counter++){
+        //finds word
+      for(int counterInside = startChar; counter < input.length(); counter++){
 
-      break;
+        if(findNumber(input.charAt(counterInside)) == 1){
 
-      //case "T":
+          valString += input.charAt(counterInside);
+          writeData(valString);
+        }
+        else{
+          startChar = input.charAt(counterInside);
+          break;
+          }
 
-      default:
-      bluetooth.write("ErrorInvalidCommand");
-      return("");
-      break;
+          //sets word into number and into val and resets
+        intValues[counter] = valString.toInt();
+      valString = "";
+      }
+      
+      for(int counter = input.charAt(startChar); counter < input.length(); counter++){
+        if(input.charAt(counter) == ' '){
+          startChar = counter;
+          break;
+        }
+        else{}
+      }
+
+      }
+      distance = intValues[0];
+      speed = intValues[1];
+      dir = intValues[2];
+    writeData(String(distance));
+    writeData(String(speed));
+    writeData(String(dir));
+    }
+    else{
+      writeData("ErrorInvalidCommand");
     }
   }
 
@@ -115,9 +146,9 @@ class motorFunctions{
     float middleTime = timeBetweenSteps(steps, speed);
     int checkTime = millis();
     setDirection(direction);
-    Serial.println("Driving degrees");
-    Serial.println(middleTime);
-    Serial.println(steps);
+    // Serial.println("Driving degrees");
+    // Serial.println(middleTime);
+    // Serial.println(steps);
     for(int stepCounter = 0; stepCounter < steps; stepCounter++){
         if(millis() >= checkTime + (stepCounter * middleTime)){
           digitalWrite(stepPin, LOW);
@@ -229,10 +260,11 @@ void setup() {
   //home device
   //void homeCarriage();
   //tell user finished Initalized;
-  bte.writeData("Done setting up camera slider, now active, functions: ");
-  bte.writeData("D(distance mm) totalTime(s) dir(0 is left, 1 is right), ex D300 10 1");
+
   //bluetooth.write("T(time s) speed(mm/s) dir(0 is left, 1 is right) ex T300 10 1");
   Serial.begin(115200);
+  bte.writeData("Done setting up camera slider, now active, functions: ");
+  bte.writeData("D (distance mm) totalTime(s) dir(0 is left, 1 is right), ex D 300 10 1");
   Serial.println("Startup Done");
 }
 
@@ -243,8 +275,16 @@ void loop() {
   float speed;
   bool dir;
   String inputStr = bte.readData();
-  bte.parseData(inputStr, distance, speed, dir);
-  stepper.driveDistance(distance, speed, dir);
+  if (inputStr != ""){
+  Serial.println(inputStr);
+    bte.parseData(inputStr, distance, speed, dir);
+    // bte.writeData(String(distance));
+    // bte.writeData(String(speed));
+    // bte.writeData(String(dir));
+    stepper.driveDistance(distance, speed, dir);
+  }
+
+
 
 }
 
@@ -261,4 +301,3 @@ void loop() {
 //   void G0(int distance, bool dir, float speed){
 //   }
 // };
-
