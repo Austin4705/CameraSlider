@@ -24,23 +24,21 @@ class bluetoothFunctions{
   public:
     String readData(){
       String data = "";
-    while(bluetooth.available()){
+      while(bluetooth.available()){
       char charData = bluetooth.read();
       data += charData;
-      //Serial.write(bluetooth.read());
+      //// Serial.write(bluetooth.read());    
     }
     return(data);
-  }
+    }
     void writeData(String inputString){
       for(int counter = 0; counter < inputString.length(); counter++){
           char letter = inputString.charAt(counter); 
           bluetooth.write(letter);
       }
-      bluetooth.println("");
      //bluetooth.write(inputString[inputString.length()]);
-      //bluetooth.write();
     }
-  bool findNumber(char inputChar){
+    bool findNumber(char inputChar){
     switch (inputChar)
     {
     case '0':
@@ -78,47 +76,44 @@ class bluetoothFunctions{
     }
   }
   //ill write this tom
-  void parseData(String input, int& distance, float& speed, bool& dir){
-    char firstChar = input.charAt(0);
-    if(firstChar == 'D'){
-      int intValues[3] = {0};
-      char startChar = 1;
-      String valString = "";
+  void parseData(String input, int& distance, int& speed, bool& dir){
+    if(input.charAt(0) == 'D'){
+      //parses here
+      int intValues[3] = {0}; //array of 3 to store 3 var
+      int startChar = 1; //where the parcer whole start in the program, at char after 1
+      String valString = ""; //the string where the value being parsed gets put in
       //put the number into the string
-      for (int counter = 0; counter < 3; counter++){
-        //finds word
-      for(int counterInside = startChar; counter < input.length(); counter++){
-
-        if(findNumber(input.charAt(counterInside)) == 1){
-
-          valString += input.charAt(counterInside);
-          writeData(valString);
-        }
-        else{
-          startChar = input.charAt(counterInside);
-          break;
+      bool numberOver = 0;
+      for (int counter = 0; counter < 3; counter++){ //finds the value 3 different times D100 10 1
+        numberOver = 0;
+        for(int counterInside = startChar; counterInside < input.length() && numberOver != 1; counterInside++){ //starts at char to start looking for numbers
+          if(findNumber(input.charAt(counterInside)) == 1){ //if char is a number
+            valString += input.charAt(counterInside); //add to total number
           }
-
-          //sets word into number and into val and resets
-        intValues[counter] = valString.toInt();
-      valString = "";
-      }
-      
-      for(int counter = input.charAt(startChar); counter < input.length(); counter++){
-        if(input.charAt(counter) == ' '){
-          startChar = counter;
-          break;
+          else{
+            startChar = counterInside+1; //number is over ad start at the next char
+            numberOver = 1; //throws error to stop loop
+            }
         }
-        else{}
+        //output the character and reset the string
+        intValues[counter] = valString.toInt();
+       // Serial.println(String(intValues[counter]));
+      //  Serial.println(valString);
+        valString = "";
+        // Serial.print("Counter ");
+        // Serial.print(counter);
       }
 
-      }
+      //sets refrence parameters equal to values
       distance = intValues[0];
       speed = intValues[1];
       dir = intValues[2];
-    writeData(String(distance));
-    writeData(String(speed));
-    writeData(String(dir));
+      //debbuging
+      // Serial.println(String(distance));
+      // Serial.println(String(speed));
+      // Serial.println(String(dir));
+
+    //parses here
     }
     else{
       writeData("ErrorInvalidCommand");
@@ -141,25 +136,21 @@ class motorFunctions{
     return(9 * distance);// distance / 40 = degrees / 360;   degrees = 360distance /40; degrees = 9distance
   }
   public:
-  void driveDegrees(int degrees, float speed, bool direction){
+  void driveDegrees(int degrees, int speed, bool direction){
     int steps = calculateSteps(degrees);
     float middleTime = timeBetweenSteps(steps, speed);
     int checkTime = millis();
     setDirection(direction);
-    // Serial.println("Driving degrees");
-    // Serial.println(middleTime);
-    // Serial.println(steps);
     for(int stepCounter = 0; stepCounter < steps; stepCounter++){
         if(millis() >= checkTime + (stepCounter * middleTime)){
           digitalWrite(stepPin, LOW);
           digitalWrite(stepPin, HIGH);
-          digitalWrite(stepPin, LOW);      
-          Serial.println(stepCounter);    
+          digitalWrite(stepPin, LOW);         
         }
         else{}
     }
   }
-  void driveDistance(int distance, float speed, bool direction){ 
+  void driveDistance(int distance, int speed, bool direction){ 
     int degreesToDrive = degreesForDistance(distance);
     driveDegrees(degreesToDrive, speed, direction);
   }
@@ -262,30 +253,25 @@ void setup() {
   //tell user finished Initalized;
 
   //bluetooth.write("T(time s) speed(mm/s) dir(0 is left, 1 is right) ex T300 10 1");
-  Serial.begin(115200);
+   Serial.begin(115200);
   bte.writeData("Done setting up camera slider, now active, functions: ");
   bte.writeData("D (distance mm) totalTime(s) dir(0 is left, 1 is right), ex D 300 10 1");
-  Serial.println("Startup Done");
+  // Serial.println("Startup Done");
 }
 
 
 //simple ik, the var there are refrence btw
 void loop() {
   int distance;
-  float speed;
+  int speed;
   bool dir;
   String inputStr = bte.readData();
   if (inputStr != ""){
-  Serial.println(inputStr);
+    Serial.println(inputStr);
+    bte.writeData(inputStr);
     bte.parseData(inputStr, distance, speed, dir);
-    // bte.writeData(String(distance));
-    // bte.writeData(String(speed));
-    // bte.writeData(String(dir));
     stepper.driveDistance(distance, speed, dir);
   }
-
-
-
 }
 
 
@@ -301,3 +287,4 @@ void loop() {
 //   void G0(int distance, bool dir, float speed){
 //   }
 // };
+
